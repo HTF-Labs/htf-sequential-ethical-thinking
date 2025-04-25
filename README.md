@@ -128,7 +128,7 @@ For Docker installation:
 To build the Docker image:
 
 ```bash
-docker build -t mcp/sequentialethicalthinking -f src/sequentialethicalthinking/Dockerfile .
+docker build -t mcp/sequentialethicalthinking -f Dockerfile .
 ```
 
 ## License
