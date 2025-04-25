@@ -56,7 +56,7 @@ Add this to your `claude_desktop_config.json`:
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-sequential-ethical-thinking"
+        "@Paulhb7/mcp-sequential-ethical-thinking"
       ]
     }
   }
@@ -95,7 +95,7 @@ For NPX installation:
         "command": "npx",
         "args": [
           "-y",
-          "@modelcontextprotocol/server-sequential-ethical-thinking"
+          "@Paulhb7/mcp-sequential-ethical-thinking"
         ]
       }
     }
