@@ -7,19 +7,30 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import chalk from 'chalk';
+import chalk from "chalk";
+
+type EthicalPhase =
+  | "deontological"
+  | "consequentialist"
+  | "virtue"
+  | "care"
+  | "pluralistic"
+  | "guardian"
+  | "clarification"
+  | "custom";
 
 interface ThoughtData {
   thought: string;
   thoughtNumber: number;
   totalThoughts: number;
-  ethicalPhase: "deontological" | "consequentialist";
+  ethicalPhase: EthicalPhase;
   isRevision?: boolean;
   revisesThought?: number;
   branchFromThought?: number;
   branchId?: string;
   needsMoreThoughts?: boolean;
   nextThoughtNeeded: boolean;
+  promptForNext?: string; // For Ethical Guardian cycle
 }
 
 class SequentialEthicalThinkingServer {
@@ -29,20 +40,34 @@ class SequentialEthicalThinkingServer {
   private validateThoughtData(input: unknown): ThoughtData {
     const data = input as Record<string, unknown>;
 
-    if (!data.thought || typeof data.thought !== 'string') {
-      throw new Error('Invalid thought: must be a string');
+    // Basic validation + default fallback
+    if (!data.thought || typeof data.thought !== "string") {
+      throw new Error("Invalid thought: must be a string");
     }
-    if (!data.thoughtNumber || typeof data.thoughtNumber !== 'number') {
-      throw new Error('Invalid thoughtNumber: must be a number');
+    if (typeof data.thoughtNumber !== "number") {
+      throw new Error("Invalid thoughtNumber: must be a number");
     }
-    if (!data.totalThoughts || typeof data.totalThoughts !== 'number') {
-      throw new Error('Invalid totalThoughts: must be a number');
+    if (typeof data.totalThoughts !== "number") {
+      throw new Error("Invalid totalThoughts: must be a number");
     }
-    if (typeof data.nextThoughtNeeded !== 'boolean') {
-      throw new Error('Invalid nextThoughtNeeded: must be a boolean');
+    if (typeof data.nextThoughtNeeded !== "boolean") {
+      throw new Error("Invalid nextThoughtNeeded: must be a boolean");
     }
-    if (data.ethicalPhase !== 'deontological' && data.ethicalPhase !== 'consequentialist') {
-      throw new Error('Invalid ethicalPhase: must be "deontological" or "consequentialist"');
+    // Accept any phase in the EthicalPhase union
+    const validPhases: EthicalPhase[] = [
+      "deontological",
+      "consequentialist",
+      "virtue",
+      "care",
+      "pluralistic",
+      "guardian",
+      "clarification",
+      "custom"
+    ];
+    if (!validPhases.includes(data.ethicalPhase as EthicalPhase)) {
+      throw new Error(
+        `Invalid ethicalPhase: must be one of ${validPhases.join(", ")}`
+      );
     }
 
     return {
@@ -50,64 +75,120 @@ class SequentialEthicalThinkingServer {
       thoughtNumber: data.thoughtNumber,
       totalThoughts: data.totalThoughts,
       nextThoughtNeeded: data.nextThoughtNeeded,
-      ethicalPhase: data.ethicalPhase as "deontological" | "consequentialist",
+      ethicalPhase: data.ethicalPhase as EthicalPhase,
       isRevision: data.isRevision as boolean | undefined,
       revisesThought: data.revisesThought as number | undefined,
       branchFromThought: data.branchFromThought as number | undefined,
       branchId: data.branchId as string | undefined,
       needsMoreThoughts: data.needsMoreThoughts as boolean | undefined,
+      promptForNext: data.promptForNext as string | undefined,
     };
   }
 
   private formatThought(thoughtData: ThoughtData): string {
-    const { thoughtNumber, totalThoughts, thought, isRevision, revisesThought, branchFromThought, branchId, ethicalPhase } = thoughtData;
+    const {
+      thoughtNumber,
+      totalThoughts,
+      thought,
+      isRevision,
+      revisesThought,
+      branchFromThought,
+      branchId,
+      ethicalPhase,
+      promptForNext,
+    } = thoughtData;
 
-    let prefix = '';
-    let context = '';
+    let prefix = "";
+    let context = "";
 
     if (isRevision) {
-      prefix = chalk.yellow('🔄 Revision');
+      prefix = chalk.yellow("🔄 Revision");
       context = ` (revising thought ${revisesThought})`;
     } else if (branchFromThought) {
-      prefix = chalk.green('🌿 Branch');
+      prefix = chalk.green("🌿 Branch");
       context = ` (from thought ${branchFromThought}, ID: ${branchId})`;
-    } else if (ethicalPhase === 'deontological') {
-      prefix = chalk.magenta('⚖️ Deontological');
     } else {
-      prefix = chalk.cyan('📊 Consequentialist');
+      // New: handle all phases, colored
+      switch (ethicalPhase) {
+        case "deontological":
+          prefix = chalk.magenta("⚖️ Deontological");
+          break;
+        case "consequentialist":
+          prefix = chalk.cyan("📊 Consequentialist");
+          break;
+        case "virtue":
+          prefix = chalk.yellowBright("🌟 Virtue Ethics");
+          break;
+        case "care":
+          prefix = chalk.redBright("🤝 Care Ethics");
+          break;
+        case "pluralistic":
+          prefix = chalk.blueBright("🌐 Pluralistic");
+          break;
+        case "guardian":
+          prefix = chalk.whiteBright("🛡️ Guardian");
+          break;
+        case "clarification":
+          prefix = chalk.gray("❓ Clarification");
+          break;
+        default:
+          prefix = chalk.white("🔸 Custom");
+      }
     }
 
     const header = `${prefix} ${thoughtNumber}/${totalThoughts}${context}`;
-    const border = '─'.repeat(Math.max(header.length, thought.length) + 4);
+    const border = "─".repeat(Math.max(header.length, thought.length) + 4);
 
     return `
 ┌${border}┐
 │ ${header} │
 ├${border}┤
 │ ${thought.padEnd(border.length - 2)} │
+${
+  promptForNext
+    ? `├${border}┤\n│ Prompt for next: ${promptForNext.padEnd(
+        border.length - 18
+      )} │`
+    : ""
+}
 └${border}┘`;
   }
 
   private evaluateJudgment(): string | null {
-    const deon = this.thoughtHistory.filter(t => t.ethicalPhase === 'deontological');
-    const cons = this.thoughtHistory.filter(t => t.ethicalPhase === 'consequentialist');
+    // Here you could expand with more frameworks
+    const phases = [
+      "deontological",
+      "consequentialist",
+      "virtue",
+      "care",
+      "pluralistic",
+    ] as EthicalPhase[];
+    const relevant = this.thoughtHistory.filter((t) =>
+      phases.includes(t.ethicalPhase)
+    );
+    if (relevant.length < 2) return null;
 
-    if (deon.length > 0 && cons.length > 0) {
-      const lastDeon = deon[deon.length - 1].thought.toLowerCase();
-      const lastCons = cons[cons.length - 1].thought.toLowerCase();
+    // Simple aggregation: all frameworks must agree for “acceptable”
+    const allAcceptable = relevant.every((t) =>
+      t.thought.toLowerCase().includes("acceptable")
+    );
+    const anyUnacceptable = relevant.some((t) =>
+      t.thought.toLowerCase().includes("unacceptable")
+    );
 
-      if (lastDeon.includes("acceptable") && lastCons.includes("acceptable")) {
-        return "✅ Final ethical judgment: Action is acceptable under both frameworks.";
-      }
-      if (lastDeon.includes("unacceptable") || lastCons.includes("unacceptable")) {
-        return "❌ Final ethical judgment: Action is ethically problematic under at least one framework.";
-      }
-      return "⚠️ Ethical judgment: Mixed results, further clarification may be required.";
+    if (allAcceptable) {
+      return "✅ Final ethical judgment: Action is acceptable under all frameworks considered.";
     }
-    return null;
+    if (anyUnacceptable) {
+      return "❌ Final ethical judgment: Action is ethically problematic under at least one framework.";
+    }
+    return "⚠️ Ethical judgment: Mixed or ambiguous, further analysis recommended.";
   }
 
-  public processThought(input: unknown): { content: Array<{ type: string; text: string }>; isError?: boolean } {
+  public processThought(input: unknown): {
+    content: Array<{ type: string; text: string }>;
+    isError?: boolean;
+  } {
     try {
       const validatedInput = this.validateThoughtData(input);
 
@@ -133,30 +214,39 @@ class SequentialEthicalThinkingServer {
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              thoughtNumber: validatedInput.thoughtNumber,
-              totalThoughts: validatedInput.totalThoughts,
-              nextThoughtNeeded: validatedInput.nextThoughtNeeded,
-              branches: Object.keys(this.branches),
-              ethicalPhase: validatedInput.ethicalPhase,
-              judgment,
-              thoughtHistoryLength: this.thoughtHistory.length
-            }, null, 2)
-          }
-        ]
+            text: JSON.stringify(
+              {
+                thoughtNumber: validatedInput.thoughtNumber,
+                totalThoughts: validatedInput.totalThoughts,
+                nextThoughtNeeded: validatedInput.nextThoughtNeeded,
+                branches: Object.keys(this.branches),
+                ethicalPhase: validatedInput.ethicalPhase,
+                promptForNext: validatedInput.promptForNext,
+                judgment,
+                thoughtHistoryLength: this.thoughtHistory.length,
+              },
+              null,
+              2
+            ),
+          },
+        ],
       };
     } catch (error) {
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              error: error instanceof Error ? error.message : String(error),
-              status: 'failed'
-            }, null, 2)
-          }
+            text: JSON.stringify(
+              {
+                error: error instanceof Error ? error.message : String(error),
+                status: "failed",
+              },
+              null,
+              2
+            ),
+          },
         ],
-        isError: true
+        isError: true,
       };
     }
   }
@@ -164,19 +254,18 @@ class SequentialEthicalThinkingServer {
 
 const SEQUENTIAL_ETHICAL_THINKING_TOOL: Tool = {
   name: "sequentialethicalthinking",
-  description: `A structured tool for ethical reasoning through sequential steps.
-This tool helps analyze moral questions by examining both duties and consequences.
+  description: `A structured tool for ethical reasoning, supporting sequential, branching, and pluralistic moral analysis.
+Phases supported:
+- deontological: Is the action right in itself?
+- consequentialist: What are the likely outcomes?
+- virtue: What would a person of exemplary character do?
+- care: Are relational needs and vulnerabilities addressed?
+- pluralistic: Integration/critique of several frameworks
+- guardian: For meta-level critique, prompts, or clarification cycles
 
-Phases:
-1. Deontological analysis: Is the action morally right in itself?
-2. Consequentialist analysis: What are the likely outcomes of the action?
+Use for evaluating dilemmas, conflicting values, or as an ethical “prompt engine” to guide further analysis.
 
-Use this tool for:
-- Evaluating ethical dilemmas
-- Decision-making involving conflicting values
-- AI alignment and value-sensitive design
-
-Each step logs context, and a final judgment is suggested based on the reasoning.`,
+Each step logs context; a final judgment is suggested if possible.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -191,9 +280,19 @@ Each step logs context, and a final judgment is suggested based on the reasoning
       needsMoreThoughts: { type: "boolean", description: "Do we need more thinking?" },
       ethicalPhase: {
         type: "string",
-        enum: ["deontological", "consequentialist"],
+        enum: [
+          "deontological",
+          "consequentialist",
+          "virtue",
+          "care",
+          "pluralistic",
+          "guardian",
+          "clarification",
+          "custom"
+        ],
         description: "Type of ethical reasoning used in this step"
-      }
+      },
+      promptForNext: { type: "string", description: "Prompt/instruction for the next step, for meta-level guidance (optional)" },
     },
     required: ["thought", "nextThoughtNeeded", "thoughtNumber", "totalThoughts", "ethicalPhase"]
   }
@@ -202,7 +301,7 @@ Each step logs context, and a final judgment is suggested based on the reasoning
 const server = new Server(
   {
     name: "sequential-ethical-thinking-server",
-    version: "0.1.0",
+    version: "0.2.0",
   },
   {
     capabilities: {
@@ -223,11 +322,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   return {
-    content: [{
-      type: "text",
-      text: `Unknown tool: ${request.params.name}`
-    }],
-    isError: true
+    content: [
+      {
+        type: "text",
+        text: `Unknown tool: ${request.params.name}`,
+      },
+    ],
+    isError: true,
   };
 });
 
