@@ -1,45 +1,54 @@
 # Sequential Ethical Thinking MCP Server
 
-An experimental MCP server that provides a tool for structured ethical reasoning using both deontological and consequentialist analysis.
-
-Based on Anthropic's sequential thinking server, this version is extended to reason about actions from a moral perspective, step by step.
+An experimental MCP server that provides a tool for structured, auditable ethical reasoning—step by step—using multiple moral frameworks.  
+Inspired by Anthropic's sequential thinking server, this version supports deontological, consequentialist, virtue, care, pluralistic, and meta-level (“guardian”) reasoning for deep, transparent moral deliberation.
 
 ## Features
 
-- Structure ethical reasoning in two distinct phases:
-  - ⚖️ Deontological: Is the action right in itself?
+- **Pluralistic moral reasoning:**  
+  - ⚖️ Deontological (duty-based): Is the action right in itself?
   - 📈 Consequentialist: What are the likely outcomes?
+  - 🌟 Virtue: What would a person of exemplary moral character do?
+  - 🤝 Care: Are relational needs and vulnerabilities addressed?
+  - 🌐 Pluralistic: Integration/critique of several frameworks
+  - 🛡️ Guardian/Clarification: Meta-level guidance, prompt cycles, or clarification loops
 - Track revisions and branches in ethical reasoning
-- Suggest a final moral judgment based on combined reasoning
-- Flexible and interactive analysis of ethical dilemmas
+- Log and review all reasoning steps for transparency
+- Suggest a final moral judgment based on pluralist analysis
+- Flexible and interactive—suitable for iterative or “Ethical Guardian” workflows
 
 ## Tool
 
 ### `sequentialethicalthinking`
 
-Facilitates a detailed ethical reasoning process with sequential steps.
+Facilitates detailed, stepwise, pluralistic ethical reasoning.
 
 **Inputs:**
 
 - `thought` (string): The ethical reasoning step
-- `ethicalPhase` (string): `"deontological"` or `"consequentialist"`
+- `ethicalPhase` (string):  
+  `"deontological"`, `"consequentialist"`, `"virtue"`, `"care"`, `"pluralistic"`, `"guardian"`, `"clarification"`, or `"custom"`
 - `nextThoughtNeeded` (boolean): Whether another reasoning step is needed
-- `thoughtNumber` (integer): Current reasoning step number
-- `totalThoughts` (integer): Estimated total steps needed
-- `isRevision` (boolean, optional): Whether this revises a previous thought
-- `revisesThought` (integer, optional): Which thought is being reconsidered
-- `branchFromThought` (integer, optional): Branching point thought number
+- `thoughtNumber` (integer): Current step number
+- `totalThoughts` (integer): Estimated total steps
+- `isRevision` (boolean, optional): Is this a revision of a previous thought?
+- `revisesThought` (integer, optional): Which thought is being revised
+- `branchFromThought` (integer, optional): Branching from which step
 - `branchId` (string, optional): Branch identifier
 - `needsMoreThoughts` (boolean, optional): Whether further analysis is needed
+- `promptForNext` (string, optional): Suggestion or instruction for the next reasoning step (e.g. for Ethical Guardian meta-prompts)
 
-## Usage
+**Example input:**
+```json
+{
+  "thought": "From a consequentialist viewpoint, prioritizing the scientist could maximize total lives saved.",
+  "ethicalPhase": "consequentialist",
+  "nextThoughtNeeded": true,
+  "thoughtNumber": 2,
+  "totalThoughts": 4,
+  "promptForNext": "Now consider the virtue ethics perspective."
+}
 
-This ethical reasoning tool is designed for:
-
-- Analyzing ethical dilemmas
-- Making decisions under uncertainty or conflicting values
-- AI alignment and moral judgment simulation
-- Exploring both duty-based and consequence-based perspectives
 
 ## Configuration
 
