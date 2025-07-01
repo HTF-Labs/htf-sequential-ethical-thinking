@@ -48,8 +48,7 @@ Facilitates detailed, stepwise, pluralistic ethical reasoning.
   "totalThoughts": 4,
   "promptForNext": "Now consider the virtue ethics perspective."
 }
-
-
+```
 ## Configuration
 
 ### Usage with Claude Desktop
