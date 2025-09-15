@@ -1,7 +1,7 @@
 {
   "name": "@paulhb7/mcp-sequential-ethical-thinking",
-  "version": "0.2.0",
-  "description": "Experimental MCP server for sequential ethical reasoning using deontological and consequentialist analysis. Based on Anthropic's sequential thinking server.",
+  "version": "0.3.1",
+  "description": "Experimental MCP server for sequential ethical reasoning. Based on Anthropic's sequential thinking server.",
   "license": "MIT",
   "author": "Paul Barbaste",
   "type": "module",
